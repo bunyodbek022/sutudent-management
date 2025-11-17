@@ -1,22 +1,34 @@
 import Joi from 'joi';
 
-// CREATE
-export const createCourseSchema = Joi.object({
-  title: Joi.string().max(100).required(),
-  description: Joi.string().allow('', null),
-  credits: Joi.number().integer().min(0).required(),
-  faculty_id: Joi.string().uuid({ version: 'uuidv4' }).allow(null),
-});
+export const CourseValidation = {
+  createCourseSchema: Joi.object({
+    title: Joi.string().max(100).required().trim().messages({
+      'any.required': 'Kurs nomi (title) kiritilishi shart.',
+      'string.empty': 'Kurs nomi bosh bolishi mumkin emas.',
+      'string.max': 'Kurs nomi 100 belgidan oshmasligi kerak.',
+    }),
 
-// UPDATE
-export const updateCourseSchema = Joi.object({
-  title: Joi.string().max(100),
-  description: Joi.string().allow('', null),
-  credits: Joi.number().integer().min(0),
-  faculty_id: Joi.string().uuid({ version: 'uuidv4' }).allow(null),
-});
+    description: Joi.string()
+      .allow(null, '') // Tavsif ixtiyoriy
+      .trim()
+      .optional(),
 
-// DELETE
-export const deleteCourseSchema = Joi.object({
-  id: Joi.string().uuid({ version: 'uuidv4' }).required(),
-});
+    credits: Joi.number().integer().min(1).max(30).required().messages({
+      'any.required': 'Kreditlar soni kiritilishi shart.',
+      'number.base': 'Kreditlar soni butun son bolishi kerak.',
+      'number.min': 'Kreditlar soni kamida 1 bolishi kerak.',
+    }),
+
+    faculty_id: Joi.string().uuid().required().messages({
+      'any.required': 'Fakultet tanlanishi shart.',
+      'string.uuid': 'Fakultet ID si notoʻgʻri formatda.',
+    }),
+  }),
+
+  updateCourseSchema: Joi.object({
+    title: Joi.string().max(100).required().trim(),
+    description: Joi.string().allow(null, '').trim().optional(),
+    credits: Joi.number().integer().min(1).max(30).required(),
+    faculty_id: Joi.string().uuid().required(),
+  }),
+};

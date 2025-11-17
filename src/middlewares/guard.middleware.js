@@ -3,68 +3,85 @@
 import { verifyToken } from '../helpers/jwt.js';
 import { BaseModel } from '../models/baseModel.js';
 import { ApiError } from '../utils/ApiError.js';
+
 const Employees = BaseModel('employees');
+
 // AUTH GUARD
 export const authGuard = async (req, res, next) => {
   try {
     const token = req.cookies?.accessToken;
+
     if (!token) {
-      return next(new ApiError(401, 'Token mavjud emas'));
+      return next(ApiError.unauthorized('Access token is missing'));
     }
 
     const verified = await verifyToken(token, process.env.JWT_ACCESS_SECRET);
     const user = await Employees.getById(verified.id);
+
+    if (!user) {
+      return next(ApiError.notFound('User not found'));
+    }
+
     req.user = user;
     next();
   } catch (error) {
-    return next(error);
+    return next(ApiError.unauthorized('Invalid or expired token'));
   }
 };
+
+// REFRESH GUARD
 export const refreshGuard = async (req, res, next) => {
   try {
     const token = req.cookies?.refreshToken;
+
     if (!token) {
-      return next(new ApiError(401, 'Refresh token mavjud emas'));
+      return next(ApiError.unauthorized('Refresh token is missing'));
     }
+
     const decoded = await verifyToken(token, process.env.JWT_REFRESH_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
-    next(new ApiError(401, 'Refresh token yaroqsiz yoki muddati tugagan'));
+    next(ApiError.unauthorized('Invalid or expired refresh token'));
   }
 };
+
 // ROLE GUARD
-export const roleGuard = (...role) => {
-  //['users', 'employees', 'teachers']
+export const roleGuard = (...roles) => {
   return (req, res, next) => {
     const userRoles = Array.isArray(req.user.role)
       ? req.user.role
       : [req.user.role];
 
     console.log({ user: req.user });
-    console.log({ userRoles });
-    console.log({ role });
+
     if (userRoles.includes('admin')) return next();
-    const hasAccess = userRoles.some((r) => role.includes(r));
+
+    const hasAccess = userRoles.some((r) => roles.includes(r));
+
     if (!hasAccess) {
       return next(
-        new Error('Sizning rolingiz ushbu yonalishga kirish huquqiga ega emas')
+        ApiError.badRequest('You do not have access to this resource')
       );
     }
+
     next();
   };
 };
 
-//SELF GUARD
+// SELF GUARD
 export const selfGuard = (req, res, next) => {
   try {
-    let { id } = req.params;
-    let { role } = req.user;
-    if (id == req.user.id || role == 'admin') {
-      next();
-      return;
+    const { id } = req.params;
+    const { id: userId, role } = req.user;
+
+    if (id == userId || role === 'admin') {
+      return next();
     }
-    res.status(405).send({ message: 'Not allowed !' });
+
+    return next(
+      ApiError.forbidden('You are not allowed to perform this action')
+    );
   } catch (error) {
     return next(error);
   }

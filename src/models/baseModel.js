@@ -5,9 +5,17 @@ export const BaseModel = (tableName) => ({
     const [row] = await db(tableName).insert(data).returning('*');
     return row;
   },
+  knex: () => db(tableName),
 
   getAll: async () => {
     return db(tableName).select('*');
+  },
+  count: async () => {
+    const result = await db(tableName).count('* as total');
+    if (result && result.length > 0) {
+      return parseInt(result[0].total, 10);
+    }
+    return 0;
   },
 
   getById: async (id) => {

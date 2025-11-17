@@ -2,11 +2,12 @@ export async function up(knex) {
   // UUID extension
   await knex.schema.raw('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
-  return knex.schema.createTable('users', (table) => {
+  return knex.schema.createTable('students', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('uuid_generate_v4()'));
     table.string('first_name', 100).notNullable();
     table.string('last_name', 100).notNullable();
     table.string('email', 150).notNullable().unique();
+    table.string('password', 100).notNullable();
     table.date('birth_date').notNullable();
     table.date('enrollmentDate').notNullable();
     table
@@ -29,6 +30,6 @@ export async function up(knex) {
 }
 
 export async function down(knex) {
-  await knex.schema.dropTableIfExists('users');
+  await knex.schema.dropTableIfExists('students');
   await knex.schema.raw('DROP EXTENSION IF EXISTS "uuid-ossp"');
 }

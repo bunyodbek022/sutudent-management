@@ -1,18 +1,31 @@
 import Joi from 'joi';
 
-// CREATE
-export const createFacultySchema = Joi.object({
-  name: Joi.string().max(150).required(),
-  description: Joi.string().max(150),
-});
+export const FacultyValidation = {
+  createFacultySchema: Joi.object({
+    name: Joi.string().max(100).required().trim().messages({
+      'any.required': 'Fakultet nomi kiritilishi shart.',
+      'string.empty': 'Fakultet nomi bosh bolishi mumkin emas.',
+      'string.max': 'Fakultet nomi 100 belgidan oshmasligi kerak.',
+    }),
 
-// UPDATE
-export const updateFacultySchema = Joi.object({
-  name: Joi.string().max(150),
-  description: Joi.string().max(150),
-});
+    description: Joi.string().allow(null, '').trim().optional().messages({
+      'string.base': 'Tavsif matn formatida bolishi kerak.',
+    }),
+  }),
 
-// DELETE
-export const deleteFacultySchema = Joi.object({
-  id: Joi.string().uuid({ version: 'uuidv4' }).required(),
-});
+  updateFacultySchema: Joi.object({
+    name: Joi.string()
+      .max(100)
+      .required() // Yangilashda ham nom majburiy bo'lishi kerak
+      .trim()
+      .messages({
+        'any.required': 'Fakultet nomi kiritilishi shart.',
+        'string.empty': 'Fakultet nomi bosh bolishi mumkin emas.',
+        'string.max': 'Fakultet nomi 100 belgidan oshmasligi kerak.',
+      }),
+
+    description: Joi.string().allow(null, '').trim().optional().messages({
+      'string.base': 'Tavsif matn formatida bolishi kerak.',
+    }),
+  }),
+};

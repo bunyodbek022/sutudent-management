@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xodimlar Ro'yxati (Admin)</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #6a11cb;
+            --secondary-color: #2575fc;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --card-background: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-light);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .list-container { 
+            width: 95%; 
+            max-width: 1200px;
+            margin: 50px auto; 
+            background: var(--card-background); 
+            padding: 30px; 
+            border-radius: 15px; /* Yumaloq burchaklar */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+        }
+
+        h1 {
+            color: var(--primary-color); 
+            border-bottom: 3px solid var(--secondary-color); /* Chiroyli pastki chiziq */
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+
+        /* Jadval uslubi */
+        table { 
+            width: 100%; 
+            border-collapse: separate; /* Chiziqlar oralig'ini berish uchun */
+            border-spacing: 0 10px; /* Qatorlar orasidagi bo'shliq */
+            margin-top: 20px; 
+        }
+        th, td { 
+            padding: 15px 12px; 
+            text-align: left; 
+            vertical-align: middle;
+        }
+        th { 
+            background-color: var(--background-light); 
+            color: #555;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9f9f9;
+        }
+        tr:hover td {
+            background-color: #eef; /* Hover effekti */
+        }
+        td:first-child, th:first-child { border-radius: 8px 0 0 8px; }
+        td:last-child, th:last-child { border-radius: 0 8px 8px 0; }
+        td { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+
+        /* Yangi Xodim Qo'shish tugmasi */
+        .add-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 25px;
+            background-color: var(--success-color); 
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 25px; 
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.4);
+        }
+        .add-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(46, 204, 113, 0.5);
+        }
+        .add-button i {
+            margin-right: 10px;
+        }
+
+        /* Harakatlar (Action) Tugmalari */
+        .action-cell {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .action-cell a, .action-cell button {
+            transition: color 0.2s, transform 0.2s;
+            font-size: 1.1em;
+        }
+        
+        /* Tahrirlash Ikonkasi */
+        .edit-link { 
+            color: var(--secondary-color); 
+            text-decoration: none; 
+            padding: 5px;
+        }
+        .edit-link:hover { 
+            color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        /* O'chirish Ikonkasi */
+        .delete-form button {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 5px;
+        }
+        .delete-form button:hover {
+            color: #c0392b;
+            transform: scale(1.1);
+        }
+
+        /* Disabled Status */
+        .disabled-action {
+            color: #ccc;
+            font-size: 1.1em;
+            cursor: not-allowed;
+            padding: 5px;
+        }
+
+        .nav-footer a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 600;
+            margin-right: 20px;
+            padding-top: 15px;
+            display: inline-block;
+        }
+        .nav-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="list-container">
+        <h1>Xodimlar Ro'yxati</h1>
+        
+        <a href="/employees/register" class="add-button">
+            <i class="fas fa-user-plus"></i> Yangi Xodim Qo'shish
+        </a>
+        
+        <p style="margin-bottom: 25px;">Siz tizimga kirgan rolingiz: <strong><%= user.role %></strong></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ism</th>
+                    <th>Familiya</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Status</th>
+                    <th>Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% employees.forEach(employee => { %>
+                    <tr>
+                        <td><%= employee.id %></td>
+                        <td><%= employee.first_name %></td>
+                        <td><%= employee.last_name %></td>
+                        <td><%= employee.email %></td>
+                        <td><span style="text-transform: capitalize;"><%= employee.role %></span></td>
+                        <td><%= employee.status %></td>
+                        <td class="action-cell">
+                            
+                            <a href="/employees/<%= employee.id %>/edit" class="edit-link" title="Xodim ma'lumotlarini tahrirlash">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            <% if (employee.id !== user.id) { %>
+                                <form action="/employees/<%= employee.id %>/delete" method="POST" class="delete-form"
+                                    onsubmit="return confirm('Haqiqatdan ham <%= employee.first_name %> <%= employee.last_name %>ni oʻchirmoqchimisiz?');">
+                                    <button type="submit" class="delete-button" title="Xodimni o'chirish">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                <span class="disabled-action" title="O'zingizni o'chira olmaysiz">
+                                    <i class="fas fa-user-lock"></i>
+                                </span>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <div class="nav-footer">
+            <a href="/admin/dashboard">
+                <i class="fas fa-arrow-left"></i> Admin Dashboardga qaytish
+            </a>
+        </div>
+    </div>
+</body>
+</html>

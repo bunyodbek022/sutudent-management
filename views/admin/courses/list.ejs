@@ -1,0 +1,52 @@
+<body>
+    <div class="list-container" style="--primary-color: #1abc9c;">
+        <h1>Kurslar Ro'yxati 📚</h1>
+
+        <div class="actions-header">
+             <p style="margin: 0; color: var(--primary-color); font-weight: 600;"><%= courses.length %> ta kurs topildi</p>
+             <a href="/admin/courses/create" class="add-button">
+                 <i class="fas fa-plus-circle"></i> Yangi Kurs Qo'shish
+             </a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nomi</th>
+                    <th>Fakultet</th>
+                    <th>Kredit</th>
+                    <th>Tavsif</th>
+                    <th>Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% courses.forEach(course => { %>
+                    <tr>
+                        <td><%= course.id.substring(0, 8) %>...</td>
+                        <td style="font-weight: 600; color: #555;"><%= course.title %></td>
+                        <td><%= course.faculty_name || 'Aniqlanmagan' %></td>
+                        <td><%= course.credits %></td>
+                        <td><%= course.description ? course.description.substring(0, 30) + '...' : 'Tavsif yoʻq' %></td>
+                        <td class="action-cell">
+                            <a href="/admin/courses/<%= course.id %>/edit" class="edit-link" title="Tahrirlash">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="/admin/courses/<%= course.id %>/delete" method="POST" class="delete-form"
+                                onsubmit="return confirm('Haqiqatdan ham &quot;<%= course.title %>&quot; kursini oʻchirmoqchimisiz?');">
+                                <button type="submit" class="delete-button" title="O'chirish">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <div class="nav-footer">
+            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboardga qaytish</a>
+        </div>
+    </div>
+</body>
+</html>

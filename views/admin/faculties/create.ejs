@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yangi Fakultet Yaratish</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #9b59b6; /* Fakultetlar uchun asosiy rang */
+            --secondary-color: #3498db;
+            --success-color: #2ecc71;
+            --background-light: #f4f4f4;
+            --card-background: #ffffff;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .form-container { 
+            width: 90%; 
+            max-width: 550px;
+            background: var(--card-background); 
+            padding: 40px; 
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+
+        h1 {
+            color: var(--primary-color); 
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        /* Forma Elementlari */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Xato Xabarlari */
+        .error-list {
+            list-style: none;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            background: #fef2f2;
+            border: 1px solid var(--danger-color);
+            border-radius: 8px;
+        }
+        .error-list li {
+            color: var(--danger-color);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        /* Saqlash Tugmasi */
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--success-color);
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button[type="submit"]:hover {
+            background-color: #27ae60;
+            transform: translateY(-1px);
+        }
+
+        /* Qaytish Havolasi */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 25px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1><i class="fas fa-plus-circle"></i> Yangi Fakultet Yaratish</h1>
+        
+        <% if (errors && errors.length > 0) { %>
+            <ul class="error-list">
+                <% errors.forEach(err => { %>
+                    <li><%= err.message %></li>
+                <% }) %>
+            </ul>
+        <% } %>
+        
+        <% if (success) { %>
+            <div style="padding: 10px; background: #e8f8f5; color: #16a085; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <%= success %>
+            </div>
+        <% } %>
+
+
+        <form action="/admin/faculties" method="POST">
+            
+            <div class="form-group">
+                <label for="name">Fakultet Nomi: *</label>
+                <input type="text" 
+                       name="name" 
+                       id="name"
+                       value="<%= old.name || '' %>" 
+                       placeholder="Masalan: Dasturiy Injeneriya"
+                       required />
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Tavsif (ixtiyoriy):</label>
+                <textarea name="description" 
+                          id="description" 
+                          placeholder="Fakultet haqida qisqacha ma'lumot..."><%= old.description || '' %></textarea>
+            </div>
+            
+            <button type="submit">
+                <i class="fas fa-save"></i> Fakultetni Saqlash
+            </button>
+        </form>
+        
+        <a href="/admin/faculties" class="back-link">
+            <i class="fas fa-arrow-left"></i> Ro'yxatga qaytish
+        </a>
+    </div>
+</body>
+</html>

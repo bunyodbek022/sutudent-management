@@ -1,11 +1,11 @@
 import { transporter } from '../utils/mailer.js';
 
-export const sendVerificationCode = async (email, code) => {
+export const sendLoginCredentials = async (email, password) => {
   const mailOptions = {
     // eslint-disable-next-line no-undef
     from: `"Project Team" <${process.env.GOOGLE_MAIL}>`,
     to: email,
-    subject: 'Email Verification Code',
+    subject: 'Your Account Credentials',
     html: `
       <div style="
         font-family: Arial, sans-serif;
@@ -21,26 +21,16 @@ export const sendVerificationCode = async (email, code) => {
           padding: 25px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         ">
-          <h2 style="color: #2e86de;">Email Verification</h2>
+          <h2 style="color: #2e86de;">Welcome to the System</h2>
           <p style="font-size: 16px; color: #555;">
-            Assalomu alaykum! Sizning tasdiqlash kodingiz:
+            Sizning tizimga kirish ma'lumotlaringiz tayyor:
           </p>
-          <div style="
-            background-color: #2e86de;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            letter-spacing: 4px;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 8px;
-            display: inline-block;
-          ">
-            ${code}
-          </div>
+          <p style="font-size: 18px; color: #333;">
+            <b>Email:</b> ${email}<br>
+            <b>Password:</b> ${password}
+          </p>
           <p style="color: #777;">
-            Kod <b>5 daqiqa</b> davomida amal qiladi.<br>
-            Agar siz bu so'rovni yubormagan bo'lsangiz, bu xatni e'tiborsiz qoldiring.
+            Iltimos, tizimga kirgandan so'ng o'zingizga qulay yangi parol o'rnatishingizni tavsiya qilamiz.
           </p>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
           <p style="font-size: 13px; color: #999;">

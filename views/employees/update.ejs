@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profilni tahrirlash</title>
+  <style>
+    /* Avvalgi sahifalardagi asosiy CSS uslublari (body, .container, input, button, error-list, success-msg) shu yerda joylashgan */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 450px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    input[type="email"], input[type="text"], input[type="tel"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #27ae60;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #2ecc71;
+    }
+
+    .error-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 15px;
+    }
+
+    .error-list li {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .success-msg {
+      color: #27ae60;
+      font-size: 15px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .readonly-field {
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Profilni tahrirlash ✏️</h1>
+
+    <% if (errors && errors.length > 0) { %>
+      <ul class="error-list">
+        <% errors.forEach(err => { %>
+          <li><%= err.message %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <% if (success) { %>
+      <p class="success-msg"><%= success %></p>
+    <% } %>
+    
+    <% 
+        // Controllerdan kelayotgan employee bu tahrirlanayotgan odam. 
+        // user esa tizimga kirgan odam.
+        const isSelfUpdate = user.id === employee.id;
+        const isAdmin = user.role === 'admin';
+        const canEditPersonal = isAdmin || isSelfUpdate; // O'zini o'zgartira oladi
+        const canEditRoleStatus = isAdmin && !isSelfUpdate; // Admin boshqani o'zgartira oladi
+    %>
+
+    <form action="<%= isAdmin && !isSelfUpdate ? '/employees/' + employee.id + '/edit' : '/employees/profile/edit' %>" method="POST">
+      
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" name="email" value="<%= employee.email %>" class="readonly-field" readonly />
+      </div>
+
+      <div class="form-group">
+        <label for="first_name">Ism:</label>
+        <input type="text" name="first_name" value="<%= employee.first_name || '' %>" <%= canEditPersonal ? '' : 'readonly class="readonly-field"' %> />
+      </div>
+      
+      <div class="form-group">
+        <label for="last_name">Familiya:</label>
+        <input type="text" name="last_name" value="<%= employee.last_name || '' %>" <%= canEditPersonal ? '' : 'readonly class="readonly-field"' %> />
+      </div>
+
+      <div class="form-group">
+        <label for="address">Manzil (Address):</label>
+        <input type="text" name="address" value="<%= employee.address || '' %>" <%= isSelfUpdate || isAdmin ? '' : 'readonly class="readonly-field"' %> />
+      </div>
+
+      <div class="form-group">
+        <label for="phone_number">Telefon raqami:</label>
+        <input type="tel" name="phone_number" value="<%= employee.phone_number || '' %>" <%= isSelfUpdate || isAdmin ? '' : 'readonly class="readonly-field"' %> />
+      </div>
+
+      <% if (canEditRoleStatus) { %>
+        <div class="form-group">
+          <label for="role">Rol:</label>
+          <select name="role">
+            <option value="teacher" <%= employee.role === 'teacher' ? 'selected' : '' %>>Teacher</option>
+            <option value="admin" <%= employee.role === 'admin' ? 'selected' : '' %>>Admin</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="status">Status:</label>
+          <select name="status">
+            <option value="active" <%= employee.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="inactive" <%= employee.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+      <% } %>
+      
+      <button type="submit">Ma'lumotlarni saqlash</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 15px;">
+        <a href="/employees/profile" style="color: #2575fc; text-decoration: none;">Profilga qaytish</a>
+    </p>
+  </div>
+</body>
+</html>

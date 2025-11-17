@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Employee</title>
+  <style>
+    /* Body style */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    /* Container */
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 400px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    /* Form input */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #2575fc;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #6a11cb;
+    }
+
+    /* Error & success messages */
+    .error-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 15px;
+    }
+
+    .error-list li {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .success-msg {
+      color: #27ae60;
+      font-size: 15px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Employee</h1>
+
+    <% if (errors.length > 0) { %>
+      <ul class="error-list">
+        <% errors.forEach(err => { %>
+          <li><%= err.message %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <% if (success) { %>
+      <p class="success-msg"><%= success %></p>
+    <% } %>
+
+    <form action="/employees/register" method="POST">
+      <input type="text" name="first_name" placeholder="First Name" value="<%= old.first_name || '' %>" />
+      <input type="text" name="last_name" placeholder="Last Name" value="<%= old.last_name || '' %>" />
+      <input type="email" name="email" placeholder="Email" value="<%= old.email || '' %>" />
+      <input type="text" name="address" placeholder="Address" value="<%= old.address || '' %>" />
+      <input type="text" name="phone_number" placeholder="Phone Number" value="<%= old.phone_number || '' %>" />
+      <input type="password" name="password" placeholder="Password" />
+      <select name="status">
+        <option value="active" <%= old.status === 'active' ? 'selected' : '' %>>Active</option>
+        <option value="inactive" <%= old.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+      </select>
+      <button type="submit">Create Employee</button>
+    </form>
+  </div>
+</body>
+</html>

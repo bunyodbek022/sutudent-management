@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mening Kabinetim / Dashboard</title>
+  <style>
+    /* Avvalgi CSS uslublari */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 450px;
+      text-align: center;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    .profile-info {
+        text-align: left;
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        background: #f9f9f9;
+    }
+
+    .profile-info p {
+        margin: 8px 0;
+        font-size: 15px;
+        color: #555;
+        border-bottom: 1px dashed #eee;
+        padding-bottom: 5px;
+    }
+    
+    .profile-info p:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .profile-info strong {
+        color: #333;
+        display: inline-block;
+        width: 120px;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .action-buttons a, .action-buttons button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      text-decoration: none;
+      text-align: center;
+    }
+    
+    /* Logout button */
+    .logout-form button {
+      background: #e74c3c;
+      color: white;
+    }
+    .logout-form button:hover {
+      background: #c0392b;
+    }
+
+    /* Additional Info/Buttons for Teachers */
+    .info-box {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e6f7e6; /* Yashilroq fon */
+        border: 1px solid #c8e6c9;
+        border-radius: 8px;
+        color: #2e7d32;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Shaxsiy Kabinet 👤</h1>
+    <h2 style="color: #27ae60;"><%= userData.first_name %> <%= userData.last_name %></h2>
+
+    <% if (userData.role === 'admin') { %>
+        <div class="info-box" style="background-color: #ffe0b2; color: #ef6c00;">
+            <p>Siz Admin roliga egasiz. Boshqaruv Paneliga o'tishingiz mumkin:</p>
+            <a href="/admin/dashboard" style="display: block; margin-top: 10px; color: #ef6c00;">Admin Dashboard</a>
+        </div>
+    <% } %>
+
+    <div class="profile-info">
+        <h3>Asosiy ma'lumotlar:</h3>
+        <p><strong>Email:</strong> <%= userData.email %></p>
+        <p><strong>Rol:</strong> <%= userData.role %></p>
+        <p><strong>Status:</strong> <%= userData.status %></p>
+        <p><strong>Telefon:</strong> <%= userData.phone_number || 'Kiritilmagan' %></p>
+        <p><strong>Manzil:</strong> <%= userData.address || 'Kiritilmagan' %></p>
+    </div>
+
+    <div class="action-buttons">
+        <% if (userData.role === 'admin') { %>
+             <a href="/employees/profile/edit" style="background: #2575fc; color: white;">Ma'lumotlarni tahrirlash</a>
+        <% } else { %>
+            <button disabled style="background: #95a5a6; cursor: not-allowed;" title="Admin ruxsati bilan tahrirlanadi">Ma'lumotlarni tahrirlash (Ruxsat yo'q)</button>
+        <% } %>
+
+        <a href="/employees/update-password" style="background: #f1c40f; color: #333;">Parolni o'zgartirish</a> 
+    </div>
+    
+    <div class="info-box">
+        <h4>Teacher vazifalari:</h4>
+        <p>Bu yerda yaqin orada bo'lib o'tadigan darslar jadvali, o'quvchilar ro'yxati yoki xabarnomalar joylashadi.</p>
+    </div>
+
+    <form class="logout-form" action="/employees/logout" method="POST">
+      <button type="submit">Tizimdan chiqish (Logout)</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -4,7 +4,7 @@ export async function up(knex) {
     table
       .uuid('student_id')
       .references('id')
-      .inTable('users')
+      .inTable('students')
       .onDelete('CASCADE')
       .onUpdate('CASCADE');
     table

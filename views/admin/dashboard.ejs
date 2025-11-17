@@ -165,12 +165,12 @@
             
             <div class="stat-card">
                 <h3>Jami Talabalar</h3>
-                <p>0</p>
+                <p><%= stats.totalStudents|| 0 %></p>
             </div>
             
             <div class="stat-card">
                 <h3>Jami Kurslar</h3>
-                <p>0</p>
+                <p><%= stats.totalCourses || 0 %></p>
             </div>
         </div>
 
@@ -194,7 +194,7 @@
                 </div>
             </a>
             
-            <a href="#" class="module-link" style="border-left-color: #1abc9c;">
+            <a href="/admin/courses" class="module-link" style="border-left-color: #1abc9c;">
                 <i class="fas fa-book-open" style="color: #1abc9c;"></i>
                 <div class="module-text">
                     <h3>Kurslar</h3>
@@ -202,7 +202,7 @@
                 </div>
             </a>
             
-            <a href="#" class="module-link" style="border-left-color: #3498db;">
+            <a href="/admin/students" class="module-link" style="border-left-color: #3498db;">
                 <i class="fas fa-user-graduate" style="color: #3498db;"></i>
                 <div class="module-text">
                     <h3>Talabalar</h3>

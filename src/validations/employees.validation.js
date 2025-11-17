@@ -20,7 +20,7 @@ export const updateEmployeeSchema = Joi.object({
   address: Joi.string(),
   email: Joi.string(),
   phone_number: Joi.string()
-    .pattern(/^[0-9]+$/)
+    .pattern(/^\+?[0-9]+$/)
     .required(),
   password: Joi.string().min(6).max(100).trim(),
   role: Joi.string().valid('teacher', 'admin'),

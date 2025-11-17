@@ -13,6 +13,7 @@ export async function up(knex) {
       .inTable('course')
       .onDelete('CASCADE')
       .onUpdate('CASCADE');
+
     table.enu('score', ['A', 'B', 'C', 'D', 'E'], {
       useNative: true,
       enumName: 'score_enum',

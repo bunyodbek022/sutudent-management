@@ -1,9 +1,14 @@
 import { BaseModel } from '../models/baseModel.js';
 import { ApiError } from '../utils/ApiError.js';
+import { generatePassword } from '../helpers/generatePassword.js';
+import { hashPassword } from '../utils/hash.js';
+import { sendLoginCredentials } from '../services/email.service.js';
+
 const Employees = BaseModel('employees');
-// const Students = BaseModel('students');
+const Students = BaseModel('students');
 const Faculties = BaseModel('faculty');
 const Courses = BaseModel('course');
+const CourseTeacher = BaseModel('course_teacher');
 // const Grades = BaseModel('grade');
 
 export const AdminController = {
@@ -14,23 +19,40 @@ export const AdminController = {
       // Admin dashboard uchun qo'shimcha ma'lumotlarni olish mumkin (Masalan, Umumiy Statistika)
       const totalEmployees = await Employees.count();
       const totalFaculties = await Faculties.count();
+      const totalStudents = await Students.count();
+      const totalCourses = await Courses.count();
 
       if (req.headers.accept?.includes('text/html')) {
         return res.render('admin/dashboard.ejs', {
           user: loggedInUser,
-          stats: { totalEmployees, totalFaculties },
+          stats: {
+            totalEmployees,
+            totalFaculties,
+            totalStudents,
+            totalCourses,
+          },
         });
       }
 
       res.status(200).json({
         success: true,
         message: 'Admin Dashboard data',
-        data: { loggedInUser, stats: { totalEmployees } },
+        data: {
+          loggedInUser,
+          stats: {
+            totalEmployees,
+            totalStudents,
+            totalCourses,
+            totalFaculties,
+          },
+        },
       });
     } catch (err) {
       next(err);
     }
   },
+  //--------------------FACULTY-------------------------------------
+
   // R: READ ALL - /admin/faculties
   async getAllFaculties(req, res, next) {
     try {
@@ -133,28 +155,58 @@ export const AdminController = {
       next(err);
     }
   },
-
+  // -----------------------------COURSES---------------------------------------
   //READ ALL (Ro'yxatni ko'rish) - /admin/courses
   async getAllCourses(req, res, next) {
     try {
-      // Kurs ro'yxatini va ularga tegishli fakultet nomini olish (JOIN)
+      // 1. Barcha kurslar va ularning Fakultetlarini olish
       const courses = await Courses.knex()
         .select('course.*', 'faculty.name as faculty_name')
         .leftJoin('faculty', 'course.faculty_id', '=', 'faculty.id');
 
-      return res.render('admin/courses/list.ejs', { courses, user: req.user });
+      // 2. Barcha kurs-o'qituvchi tayinlanishlarini olish (o'qituvchi ma'lumotlari bilan)
+      const allAssignments = await CourseTeacher.knex()
+        .select(
+          'course_teacher.course_id',
+          'employees.first_name',
+          'employees.last_name'
+        )
+        .join('employees', 'course_teacher.employee_id', '=', 'employees.id');
+
+      // 3. Ma'lumotlarni birlashtiri
+      const courseTeacherMap = new Map();
+
+      allAssignments.forEach((assignment) => {
+        const fullName = `${assignment.first_name} ${assignment.last_name}`;
+        if (!courseTeacherMap.has(assignment.course_id)) {
+          courseTeacherMap.set(assignment.course_id, []);
+        }
+        courseTeacherMap.get(assignment.course_id).push(fullName);
+      });
+
+      //Birlashtirilgan ma'lumotni har bir kurs obyektiga qo'shish
+      const coursesWithTeachers = courses.map((course) => ({
+        ...course,
+        teachers: courseTeacherMap.get(course.id) || [],
+      }));
+
+      return res.render('admin/courses/list.ejs', {
+        courses: coursesWithTeachers,
+        user: req.user,
+      });
     } catch (err) {
       next(err);
     }
   },
-
   // CREATE (Yaratish formasi) - /admin/courses/create (GET)
   async createCoursePage(req, res, next) {
     try {
       const faculties = await Faculties.getAll();
+      const employees = await Employees.getAll();
       return res.render('admin/courses/create.ejs', {
         user: req.user,
         faculties,
+        employees,
         errors: [],
         old: {},
       });
@@ -168,15 +220,38 @@ export const AdminController = {
     try {
       if (req.validationErrors && req.validationErrors.length > 0) {
         const faculties = await Faculties.getAll();
+        const employees = await Employees.getAll();
         return res.render('admin/courses/create.ejs', {
           errors: req.validationErrors,
           old: req.oldBody,
           user: req.user,
           faculties,
+          employees,
         });
       }
+      const {
+        teacher_ids = [], // teacher_ids ni massiv yoki bo'sh massiv sifatida olamiz
+        title,
+        credits,
+        faculty_id,
+        description,
+      } = req.body;
 
-      await Courses.create(req.body);
+      const courseData = { title, credits, faculty_id, description };
+      const newCourse = await Courses.create(courseData);
+      const newCourseId = newCourse.id;
+
+      if (teacher_ids.length > 0) {
+        const teachersArray = Array.isArray(teacher_ids)
+          ? teacher_ids
+          : [teacher_ids];
+
+        const assignments = teachersArray.map((id) => ({
+          course_id: newCourseId,
+          employee_id: id,
+        }));
+        await CourseTeacher.knex().insert(assignments);
+      }
       return res.redirect('/admin/courses');
     } catch (err) {
       next(err);
@@ -187,41 +262,90 @@ export const AdminController = {
   async updateCoursePage(req, res, next) {
     try {
       const courseId = req.params.id;
-      const course = await Courses.getById(courseId);
-      const faculties = await Faculties.getAll();
+      const [course, faculties, employees, currentTeachers] = await Promise.all(
+        [
+          Courses.getById(courseId),
+          Faculties.getAll(),
+          Employees.getAll(),
+          CourseTeacher.knex()
+            .where({ course_id: courseId })
+            .select('employee_id'),
+        ]
+      );
 
       if (!course) {
-        throw ApiError.notFound('Kurs topilmadi.');
+        return res.status(404).send('Kurs topilmadi.');
       }
+
+      // Tayinlangan o'qituvchilar IDlarini massivga aylantiramiz
+      const assignedTeacherIds = currentTeachers.map((t) => t.employee_id);
 
       return res.render('admin/courses/edit.ejs', {
         course,
         faculties,
+        employees,
+        assignedTeacherIds, // Tayinlangan IDlar ro'yxati
         user: req.user,
         errors: req.validationErrors || [],
-        success: null,
+        old: {},
       });
     } catch (err) {
       next(err);
     }
   },
-
   // UPDATE (Ma'lumotni yangilash) - /admin/courses/:id/edit
   async updateCourse(req, res, next) {
     try {
+      const courseId = req.params.id;
+
+      //Validatsiya xatolarini tekshirish
       if (req.validationErrors && req.validationErrors.length > 0) {
-        const course = await Courses.getById(req.params.id);
-        const faculties = await Faculties.getAll();
+        const [faculties, employees] = await Promise.all([
+          Faculties.getAll(),
+          Employees.getAll(),
+        ]);
+        const course = await Courses.getById(courseId);
+
+        const currentTeachers = await CourseTeacher.knex()
+          .where({ course_id: courseId })
+          .select('employee_id');
+        const assignedTeacherIds = currentTeachers.map((t) => t.employee_id);
+
         return res.render('admin/courses/edit.ejs', {
           course,
           faculties,
+          employees,
+          assignedTeacherIds,
           errors: req.validationErrors,
           old: req.oldBody,
           user: req.user,
         });
       }
+      const {
+        teacher_ids = [],
+        title,
+        credits,
+        faculty_id,
+        description,
+      } = req.body;
 
-      await Courses.update(req.params.id, req.body);
+      const courseData = { title, credits, faculty_id, description };
+      await Courses.update(courseId, courseData);
+      await CourseTeacher.knex().where({ course_id: courseId }).del();
+
+      if (teacher_ids.length > 0) {
+        const teachersArray = Array.isArray(teacher_ids)
+          ? teacher_ids
+          : [teacher_ids];
+
+        const assignments = teachersArray.map((id) => ({
+          course_id: courseId,
+          employee_id: id,
+        }));
+
+        await CourseTeacher.knex().insert(assignments);
+      }
+
       return res.redirect('/admin/courses');
     } catch (err) {
       next(err);
@@ -233,6 +357,154 @@ export const AdminController = {
     try {
       await Courses.delete(req.params.id);
       return res.redirect('/admin/courses');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //--------------------------STUDENT---------------------------------
+
+  // READ ALL (Ro'yxatni ko'rish) - /admin/students
+  async getAllStudents(req, res, next) {
+    try {
+      const students = await Students.knex()
+        .select(
+          'students.*',
+          'course.title as course_title',
+          'faculty.name as faculty_name'
+        )
+        .leftJoin('course', 'students.course_id', '=', 'course.id')
+        .leftJoin('faculty', 'course.faculty_id', '=', 'faculty.id');
+
+      return res.render('admin/students/list.ejs', {
+        students,
+        user: req.user,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  //CREATE (Yaratish formasi) - /admin/students/create (GET)
+  async createStudentPage(req, res, next) {
+    try {
+      const courses = await Courses.getAll();
+      return res.render('admin/students/create.ejs', {
+        user: req.user,
+        courses,
+        errors: [],
+        old: {},
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // CREATE (Talabani saqlash va Parol yuborish) - /admin/students (POST)
+  async createStudent(req, res, next) {
+    try {
+      // Validatsiya xatolarini tekshirish
+      if (req.validationErrors && req.validationErrors.length > 0) {
+        const courses = await Courses.getAll();
+        return res.render('admin/students/create.ejs', {
+          errors: req.validationErrors,
+          old: req.oldBody,
+          user: req.user,
+          courses,
+        });
+      }
+
+      const { email, birth_date, enrollmentDate, ...studentData } = req.body;
+
+      // Avtomatik parol yaratish
+      const randomPassword = generatePassword();
+      const hashedPassword = await hashPassword(randomPassword);
+
+      await Students.create({
+        ...studentData,
+        email: email,
+        password: hashedPassword,
+        birth_date: birth_date,
+        enrollmentDate: enrollmentDate,
+      });
+
+      await sendLoginCredentials(email, randomPassword);
+
+      return res.redirect('/admin/students');
+    } catch (err) {
+      next(err);
+    }
+  },
+  async updateStudentPage(req, res, next) {
+    try {
+      const studentId = req.params.id;
+      const student = await Students.getById(studentId);
+      const courses = await Courses.getAll(); // Barcha kurslar tanlash uchun
+
+      if (!student) {
+        return res.status(404).send('Talaba topilmadi.');
+      }
+
+      // Date formatini EJS'da to'g'ri ko'rsatish uchun "YYYY-MM-DD" ga o'tkazish
+      const formatDate = (date) =>
+        date ? new Date(date).toISOString().substring(0, 10) : null;
+
+      student.birth_date = formatDate(student.birth_date);
+      student.enrollmentDate = formatDate(student.enrollmentDate);
+
+      return res.render('admin/students/edit.ejs', {
+        student,
+        courses,
+        user: req.user,
+        errors: req.validationErrors || [],
+        old: {},
+        success: null,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // UPDATE (Ma'lumotni yangilash) - /admin/students/:id/edit (POST)
+  async updateStudent(req, res, next) {
+    try {
+      if (req.validationErrors && req.validationErrors.length > 0) {
+        const courses = await Courses.getAll();
+        const student = await Students.getById(req.params.id); // Talabani qayta yuklash
+
+        // Date formatini oldinga to'g'ri uzatish uchun
+        const formatDate = (date) =>
+          date ? new Date(date).toISOString().substring(0, 10) : null;
+        if (student.birth_date)
+          student.birth_date = formatDate(student.birth_date);
+        if (student.enrollmentDate)
+          student.enrollmentDate = formatDate(student.enrollmentDate);
+
+        return res.render('admin/students/edit.ejs', {
+          student,
+          courses,
+          errors: req.validationErrors,
+          old: req.oldBody,
+          user: req.user,
+        });
+      }
+
+      // eslint-disable-next-line no-unused-vars
+      const { email, ...updateData } = req.body;
+
+      await Students.update(req.params.id, updateData);
+
+      return res.redirect('/admin/students');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // DELETE (O'chirish) - /admin/students/:id/delete (POST)
+  async deleteStudent(req, res, next) {
+    try {
+      await Students.delete(req.params.id);
+      return res.redirect('/admin/students');
     } catch (err) {
       next(err);
     }

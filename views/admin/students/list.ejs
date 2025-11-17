@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talabalar Ro'yxati</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #3498db; /* Talabalar uchun asosiy rang */
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --card-background: #ffffff;
+            --font-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-light);
+            color: var(--font-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        .list-container { 
+            width: 90%; 
+            max-width: 1400px;
+            margin: 50px auto; 
+            background: var(--card-background); 
+            padding: 30px; 
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15); 
+        }
+
+        h1 {
+            color: var(--primary-color); 
+            border-bottom: 3px solid var(--secondary-color); 
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+        
+        /* Tugmalar bloki */
+        .actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        /* Yangi Talaba Qo'shish tugmasi */
+        .add-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--success-color); 
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.4);
+        }
+        .add-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        .add-button i {
+            margin-right: 10px;
+        }
+
+        /* Jadval uslubi */
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0 10px; 
+            margin-top: 20px; 
+        }
+        th, td { 
+            padding: 15px 12px; 
+            text-align: left; 
+            vertical-align: middle;
+        }
+        th { 
+            background-color: var(--background-light); 
+            color: #555;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) td { background-color: #f9f9f9; }
+        tr:hover td { background-color: #eef; }
+        td { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: capitalize;
+            font-size: 0.85em;
+        }
+        .status-badge.active { background-color: #d4edda; color: #155724; }
+        .status-badge.graduated { background-color: #ffeeba; color: #856404; }
+        .status-badge.suspended { background-color: #f8d7da; color: #721c24; }
+        .status-badge.expelled { background-color: #f5c6cb; color: #721c24; }
+
+        /* Harakatlar (Action) Tugmalari */
+        .action-cell {
+            display: flex; align-items: center; gap: 15px;
+        }
+        .edit-link { color: var(--primary-color); text-decoration: none; padding: 5px; }
+        .edit-link:hover { color: var(--secondary-color); transform: scale(1.1); }
+        .delete-form button {
+            background: none; border: none; color: var(--danger-color); cursor: pointer; padding: 5px;
+        }
+        .delete-form button:hover {
+            color: #c0392b; transform: scale(1.1);
+        }
+
+        .nav-footer a { color: var(--secondary-color); text-decoration: none; font-weight: 600; padding-top: 15px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="list-container">
+        <h1>Talabalar Boshqaruvi 🎓</h1>
+
+        <div class="actions-header">
+             <p style="margin: 0; color: var(--primary-color); font-weight: 600;"><%= students.length %> ta talaba topildi</p>
+             <a href="/admin/students/create" class="add-button">
+                 <i class="fas fa-plus-circle"></i> Yangi Qo'shish
+             </a>
+        </div>
+        
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ism, Familiya</th>
+                        <th>Email / Tel</th>
+                        <th>Kurs</th>
+                        <th>Fakultet</th>
+                        <th>Status</th>
+                        <th>Tug'ilgan sana</th>
+                        <th>Harakatlar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% students.forEach(student => { %>
+                        <tr>
+                            <td style="font-weight: 600; color: var(--secondary-color);"><%= student.first_name %> <%= student.last_name %></td>
+                            <td>
+                                <%= student.email %><br>
+                                <small style="color: #7f8c8d;"><%= student.phone_number || 'Yoʻq' %></small>
+                            </td>
+                            <td><%= student.course_title || 'Kurs aniqlanmagan' %></td>
+                            <td style="color: #7f8c8d;"><%= student.faculty_name || 'Fakultet aniqlanmagan' %></td>
+                            <td>
+                                <span class="status-badge <%= student.status %>">
+                                    <%= student.status %>
+                                </span>
+                            </td>
+                            <td><%= student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'N/A' %></td>
+                            <td class="action-cell">
+                                
+                                <a href="/admin/students/<%= student.id %>/edit" class="edit-link" title="Talabani tahrirlash">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <form action="/admin/students/<%= student.id %>/delete" method="POST" class="delete-form"
+                                    onsubmit="return confirm('Haqiqatdan ham &quot;<%= student.last_name %>&quot; talabani oʻchirmoqchimisiz?');">
+                                    <button type="submit" class="delete-button" title="O'chirish">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="nav-footer">
+            <a href="/admin/dashboard">
+                <i class="fas fa-arrow-left"></i> Dashboardga qaytish
+            </a>
+        </div>
+    </div>
+</body>
+</html>

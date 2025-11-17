@@ -4,7 +4,7 @@ import { authGuard, roleGuard } from '../middlewares/guard.middleware.js';
 import { validate } from '../middlewares/validate.js';
 import { FacultyValidation } from '../validations/faculty.validation.js';
 import { CourseValidation } from '../validations/course.validation.js';
-
+import { StudentValidation } from '../validations/students.validation.js';
 const router = Router();
 router.use(authGuard, roleGuard('admin'));
 
@@ -54,5 +54,24 @@ router.post(
 
 // 4. O'chirish
 router.post('/courses/:id/delete', AdminController.deleteCourse);
+
+//----------------------STUDENT-----------------------------------
+
+router.get('/students', AdminController.getAllStudents);
+router.get('/students/create', AdminController.createStudentPage);
+router.post(
+  '/students',
+  validate(StudentValidation.createStudentSchema),
+  AdminController.createStudent
+);
+router.get('/students/:id/edit', AdminController.updateStudentPage);
+router.post(
+  '/students/:id/edit',
+  validate(StudentValidation.updateStudentSchema),
+  AdminController.updateStudent
+);
+
+//O'chirish
+router.post('/students/:id/delete', AdminController.deleteStudent);
 
 export default router;

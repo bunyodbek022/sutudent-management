@@ -8,10 +8,7 @@ export const CourseValidation = {
       'string.max': 'Kurs nomi 100 belgidan oshmasligi kerak.',
     }),
 
-    description: Joi.string()
-      .allow(null, '') // Tavsif ixtiyoriy
-      .trim()
-      .optional(),
+    description: Joi.string().allow(null, '').trim().optional(),
 
     credits: Joi.number().integer().min(1).max(30).required().messages({
       'any.required': 'Kreditlar soni kiritilishi shart.',
@@ -23,6 +20,11 @@ export const CourseValidation = {
       'any.required': 'Fakultet tanlanishi shart.',
       'string.uuid': 'Fakultet ID si notoʻgʻri formatda.',
     }),
+    teacher_ids: Joi.array()
+      .items(Joi.string().uuid())
+      .single()
+      .required()
+      .allow(null),
   }),
 
   updateCourseSchema: Joi.object({
@@ -30,5 +32,10 @@ export const CourseValidation = {
     description: Joi.string().allow(null, '').trim().optional(),
     credits: Joi.number().integer().min(1).max(30).required(),
     faculty_id: Joi.string().uuid().required(),
+    teacher_ids: Joi.array()
+      .items(Joi.string().uuid())
+      .single()
+      .optional()
+      .allow(null),
   }),
 };

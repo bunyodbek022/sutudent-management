@@ -1,21 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurslar Ro'yxati</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #1abc9c; /* Kurslar uchun */
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --font-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-light);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .create-btn {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .create-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Table Style */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f7f7f7;
+            color: var(--font-color);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        tr:hover {
+            background-color: #fcfcfc;
+        }
+        
+        /* Maxsus elementlar */
+        .credit-badge {
+            display: inline-block;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8em;
+        }
+        
+        .action-cell a {
+            margin-right: 10px;
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        .delete-btn {
+            color: var(--danger-color);
+            cursor: pointer;
+        }
+    </style>
+</head>
 <body>
-    <div class="list-container" style="--primary-color: #1abc9c;">
-        <h1>Kurslar Ro'yxati 📚</h1>
+    <div class="container">
+        <h1><i class="fas fa-book-open"></i> Kurslar Ro'yxati</h1>
 
         <div class="actions-header">
-             <p style="margin: 0; color: var(--primary-color); font-weight: 600;"><%= courses.length %> ta kurs topildi</p>
-             <a href="/admin/courses/create" class="add-button">
-                 <i class="fas fa-plus-circle"></i> Yangi Kurs Qo'shish
-             </a>
+            <p>Jami kurslar: <%= courses.length %></p>
+            <a href="/admin/courses/create" class="create-btn">
+                <i class="fas fa-plus"></i> Yangi Kurs Yaratish
+            </a>
         </div>
         
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nomi</th>
+                    <th>Kurs Nomi</th>
                     <th>Fakultet</th>
-                    <th>Kredit</th>
+                    <th>O'qituvchi(lar)</th>  <th>Kredit</th>
                     <th>Tavsif</th>
                     <th>Harakatlar</th>
                 </tr>
@@ -24,17 +132,34 @@
                 <% courses.forEach(course => { %>
                     <tr>
                         <td><%= course.id.substring(0, 8) %>...</td>
-                        <td style="font-weight: 600; color: #555;"><%= course.title %></td>
-                        <td><%= course.faculty_name || 'Aniqlanmagan' %></td>
-                        <td><%= course.credits %></td>
-                        <td><%= course.description ? course.description.substring(0, 30) + '...' : 'Tavsif yoʻq' %></td>
+                        <td style="font-weight: 600; color: var(--font-color);"><%= course.title %></td>
+                        <td style="color: #7f8c8d;"><%= course.faculty_name || 'Fakultet oʻchirilgan' %></td>
+                        
+                        <td>
+                            <% if (course.teachers && course.teachers.length > 0) { %>
+                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                    <% course.teachers.forEach(teacher => { %>
+                                        <li style="font-size: 0.9em; margin-bottom: 3px; color: var(--secondary-color);"><i class="fas fa-chalkboard-teacher" style="margin-right: 5px;"></i> <%= teacher %></li>
+                                    <% }) %>
+                                </ul>
+                            <% } else { %>
+                                <span style="color: var(--danger-color); font-weight: 600; font-size: 0.9em;">Tayinlanmagan</span>
+                            <% } %>
+                        </td>
+                        <td><span class="credit-badge"><%= course.credits %></span></td>
+                        <td>
+                            <% if (course.description) { %>
+                                <%= course.description.substring(0, 50) + (course.description.length > 50 ? '...' : '') %>
+                            <% } else { %>
+                                <span style="color: #ccc;">Tavsif yoʻq</span>
+                            <% } %>
+                        </td>
                         <td class="action-cell">
-                            <a href="/admin/courses/<%= course.id %>/edit" class="edit-link" title="Tahrirlash">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="/admin/courses/<%= course.id %>/delete" method="POST" class="delete-form"
-                                onsubmit="return confirm('Haqiqatdan ham &quot;<%= course.title %>&quot; kursini oʻchirmoqchimisiz?');">
-                                <button type="submit" class="delete-button" title="O'chirish">
+                            <a href="/admin/courses/<%= course.id %>/edit" title="Tahrirlash"><i class="fas fa-edit"></i></a>
+                            
+                            <form action="/admin/courses/<%= course.id %>/delete" method="POST" style="display: inline;" 
+                                  onsubmit="return confirm('Haqiqatan ham bu kursni oʻchirmoqchimisiz?');">
+                                <button type="submit" class="delete-btn" style="background: none; border: none; padding: 0; cursor: pointer;" title="O'chirish">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
@@ -43,10 +168,7 @@
                 <% }) %>
             </tbody>
         </table>
-
-        <div class="nav-footer">
-            <a href="/admin/dashboard"><i class="fas fa-arrow-left"></i> Dashboardga qaytish</a>
-        </div>
+        
     </div>
 </body>
 </html>

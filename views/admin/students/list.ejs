@@ -11,7 +11,7 @@
           
     <style>
         :root {
-            --primary-color: #3498db; /* Talabalar uchun asosiy rang */
+            --primary-color: #3498db; 
             --secondary-color: #2c3e50;
             --success-color: #2ecc71;
             --danger-color: #e74c3c;
@@ -46,7 +46,6 @@
             font-size: 2em;
         }
         
-        /* Tugmalar bloki */
         .actions-header {
             display: flex;
             justify-content: space-between;
@@ -54,7 +53,6 @@
             margin-bottom: 25px;
         }
 
-        /* Yangi Talaba Qo'shish tugmasi */
         .add-button {
             display: inline-flex;
             align-items: center;
@@ -75,7 +73,6 @@
             margin-right: 10px;
         }
 
-        /* Jadval uslubi */
         table { 
             width: 100%; 
             border-collapse: separate; 
@@ -144,10 +141,9 @@
                     <tr>
                         <th>Ism, Familiya</th>
                         <th>Email / Tel</th>
-                        <th>Kurs</th>
-                        <th>Fakultet</th>
+                        <th>Fakultet</th> 
                         <th>Status</th>
-                        <th>Tug'ilgan sana</th>
+                        <th>Qabul Sanasi</th> <th>Tug'ilgan sana</th>
                         <th>Harakatlar</th>
                     </tr>
                 </thead>
@@ -159,13 +155,15 @@
                                 <%= student.email %><br>
                                 <small style="color: #7f8c8d;"><%= student.phone_number || 'Yoʻq' %></small>
                             </td>
-                            <td><%= student.course_title || 'Kurs aniqlanmagan' %></td>
-                            <td style="color: #7f8c8d;"><%= student.faculty_name || 'Fakultet aniqlanmagan' %></td>
+                            <td style="color: var(--primary-color); font-weight: 600;">
+                                <%= student.faculty_name || 'Fakultet biriktirilmagan' %>
+                            </td>
                             <td>
-                                <span class="status-badge <%= student.status %>">
-                                    <%= student.status %>
+                                <span class="status-badge <%= student.status ? student.status.toLowerCase() : 'active' %>">
+                                    <%= student.status || 'Active' %>
                                 </span>
                             </td>
+                            <td><%= student.enrollmentDate ? new Date(student.enrollmentDate).toLocaleDateString() : 'N/A' %></td>
                             <td><%= student.birth_date ? new Date(student.birth_date).toLocaleDateString() : 'N/A' %></td>
                             <td class="action-cell">
                                 

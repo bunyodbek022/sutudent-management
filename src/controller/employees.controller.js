@@ -107,8 +107,8 @@ export const EmployeeController = {
         }
         throw ApiError.badRequest('Email or password is incorrect');
       }
-      const accessToken = generateAccessToken(UserExist);
-      const refreshToken = generateRefreshToken(UserExist);
+      const accessToken = generateAccessToken(UserExist, 'employee');
+      const refreshToken = generateRefreshToken(UserExist, 'employee');
       res.cookie('accessToken', accessToken, {
         maxAge: 60 * 60 * 1000,
       });
@@ -124,13 +124,12 @@ export const EmployeeController = {
         let redirectPath;
 
         if (userData.role === 'admin') {
-          // Agar Admin bo'lsa, Admin Dashboard'ga yo'naltirish
           redirectPath = '/admin/dashboard';
+        } else if (userData.role === 'teacher') {
+          redirectPath = '/teacher';
         } else {
-          // Agar Teacher (yoki boshqa rol) bo'lsa, Employee Dashboard'ga yo'naltirish
           redirectPath = '/employees/profile';
         }
-
         return res.redirect(redirectPath);
       }
 
@@ -345,7 +344,7 @@ export const EmployeeController = {
       const user = await Employees.getById(decoded.id);
       if (!user) throw ApiError.notFound('User topilmadi');
 
-      const accessToken = generateAccessToken(user);
+      const accessToken = generateAccessToken(user, 'employee');
       res.cookie('accessToken', accessToken, {
         maxAge: 60 * 60 * 1000,
       });

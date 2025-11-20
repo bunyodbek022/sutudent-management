@@ -1,41 +1,41 @@
 import Joi from 'joi';
 
 export const StudentValidation = {
-  /**
-   * Talaba yaratish (POST /admin/students) uchun sxema
-   */
+  // Talaba yaratish (POST /admin/students) uchun sxema
+
   createStudentSchema: Joi.object({
     first_name: Joi.string().min(2).max(100).required(),
     last_name: Joi.string().min(2).max(100).required(),
     email: Joi.string().email().max(150).required(),
 
-    // Yangi maydonlar
-    birth_date: Joi.date()
-      .iso() // YYYY-MM-DD formatini talab qilish qulay
-      .max('now') // Tug'ilgan sana kelajakda bo'lmasligi kerak
-      .required()
-      .messages({
-        'any.required': 'Tugilgan sana kiritilishi shart.',
-        'date.max': 'Tugilgan sana kelajak sanasi bolishi mumkin emas.',
-      }),
+    birth_date: Joi.date().iso().max('now').required().messages({
+      'any.required': "Tug'ilgan sana kiritilishi shart.",
+      'date.max': "Tug'ilgan sana kelajak sanasi bo'lishi mumkin emas.",
+    }),
 
     enrollmentDate: Joi.date().iso().required().messages({
-      'any.required': 'Oqishga qabul qilingan sana kiritilishi shart.',
+      'any.required': "O'qishga qabul qilingan sana kiritilishi shart.",
     }),
 
     address: Joi.string().max(255).required(),
     phone_number: Joi.string().max(30).allow(null, '').optional(),
 
-    // `status` ni formadan qabul qilmaymiz, chunki u default 'active'
-
-    // Coursega bog'liqlik.
-    course_id: Joi.string().uuid().required().messages({
-      'any.required': 'Talaba qabul qilingan kurs tanlanishi shart.',
-      'string.uuid': 'Kurs ID si notogri formatda.',
+    faculty_id: Joi.string().uuid().required().messages({
+      'any.required': 'Fakultet tanlanishi shart.',
+      'string.uuid': "Fakultet ID si noto'g'ri formatda.",
     }),
+
+    courses: Joi.alternatives()
+      .try(Joi.string().uuid(), Joi.array().items(Joi.string().uuid()))
+      .required()
+      .messages({
+        'any.required': 'Kamida bitta kurs tanlanishi shart.',
+        'array.base': "Kurs ma'lumotlari noto'g'ri formatda.",
+      }),
   }),
 
-  // Talaba ma'lumotlarini yangilash sxemasi (masalan, parolsiz)
+  // Talaba ma'lumotlarini yangilash sxemasi (PUT /admin/students/:id)
+
   updateStudentSchema: Joi.object({
     first_name: Joi.string().min(2).max(100).required(),
     last_name: Joi.string().min(2).max(100).required(),
@@ -43,9 +43,27 @@ export const StudentValidation = {
     enrollmentDate: Joi.date().iso().required(),
     address: Joi.string().max(255).required(),
     phone_number: Joi.string().max(30).allow(null, '').optional(),
+
+    // `status` endi faqat tahrirlashda kerak
     status: Joi.string()
       .valid('active', 'graduated', 'suspended', 'expelled')
       .required(),
-    course_id: Joi.string().uuid().required(),
+
+    // 🚨 YANGILANGAN QISMLAR (edit.ejs dagi o'zgarishlarga mos)
+
+    // 1. Fakultet IDsi majburiy
+    faculty_id: Joi.string()
+      .uuid() // Agar Fakultet ID UUID bo'lsa
+      .required()
+      .messages({
+        'any.required': 'Fakultet tanlanishi shart.',
+      }),
+
+    courses: Joi.alternatives()
+      .try(Joi.string().uuid(), Joi.array().items(Joi.string().uuid()))
+      .required()
+      .messages({
+        'any.required': 'Kamida bitta kurs tanlanishi shart.',
+      }),
   }),
 };

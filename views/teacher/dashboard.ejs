@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'qituvchi Dashboardi</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #3498db; /* Ko'k rang - Teacher Portal uchun */
+            --secondary-color: #2ecc71; /* Yashil */
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --card-background: #ffffff;
+            --font-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-light);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+        }
+        h1 i {
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .user-info {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+        .user-info strong {
+            color: var(--primary-color);
+        }
+
+        /* Kurslar ro'yxati (List) */
+        .course-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .course-card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .course-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .course-card h2 {
+            margin-top: 0;
+            color: var(--font-color);
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+        .course-card p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .grade-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .grade-link:hover {
+            background-color: #27ae60;
+        }
+
+        .logout-link {
+            float: right;
+            margin-top: -50px;
+            color: var(--danger-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/teacher/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
+        <h1><i class="fas fa-tachometer-alt"></i> O'qituvchi Boshqaruv Paneli</h1>
+        
+        <div class="user-info">
+            <p>Xush kelibsiz, <strong><%= user.first_name %> <%= user.last_name %></strong>!</p>
+            <p>Lavozim: <%= user.position || 'Oʻqituvchi' %></p>
+        </div>
+
+        <h2><i class="fas fa-chalkboard"></i> Biriktirilgan Kurslarim</h2>
+
+        <% if (courses && courses.length > 0) { %>
+            <ul class="course-list">
+                <% courses.forEach(course => { %>
+                    <li class="course-card">
+                        <h2><%= course.title %></h2>
+                        <p><i class="fas fa-layer-group"></i> Kreditlar: <%= course.credits %></p>
+                        <p><i class="fas fa-info-circle"></i> Tavsif: <%= course.description ? course.description.substring(0, 80) + '...' : 'Tavsif yoʻq' %></p>
+                        
+                        <a href="/teacher/courses/<%= course.id %>/grade" class="grade-link">
+                            <i class="fas fa-star"></i> Baholashni Boshlash
+                        </a>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <div style="text-align: center; padding: 40px; border: 1px dashed #ccc; border-radius: 8px; color: #7f8c8d;">
+                <i class="fas fa-exclamation-circle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                <p>Sizga hozircha hech qanday kurs biriktirilmagan. Iltimos, administratorga murojaat qiling.</p>
+            </div>
+        <% } %>
+        
+    </div>
+</body>
+</html>

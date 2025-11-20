@@ -3,7 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { generatePassword } from '../helpers/generatePassword.js';
 import { hashPassword } from '../utils/hash.js';
 import { sendLoginCredentials } from '../services/email.service.js';
-
+import db from '../db/knex.js';
 const Employees = BaseModel('employees');
 const Students = BaseModel('students');
 const Faculties = BaseModel('faculty');
@@ -368,13 +368,8 @@ export const AdminController = {
   async getAllStudents(req, res, next) {
     try {
       const students = await Students.knex()
-        .select(
-          'students.*',
-          'course.title as course_title',
-          'faculty.name as faculty_name'
-        )
-        .leftJoin('course', 'students.course_id', '=', 'course.id')
-        .leftJoin('faculty', 'course.faculty_id', '=', 'faculty.id');
+        .select('students.*', 'faculty.name as faculty_name')
+        .leftJoin('faculty', 'students.faculty_id', '=', 'faculty.id');
 
       return res.render('admin/students/list.ejs', {
         students,
@@ -388,10 +383,17 @@ export const AdminController = {
   //CREATE (Yaratish formasi) - /admin/students/create (GET)
   async createStudentPage(req, res, next) {
     try {
-      const courses = await Courses.getAll();
+      const allCourses = await db('course').select(
+        'id',
+        'title',
+        'credits',
+        'faculty_id'
+      );
+      const faculties = await Faculties.getAll();
       return res.render('admin/students/create.ejs', {
         user: req.user,
-        courses,
+        allCourses,
+        faculties,
         errors: [],
         old: {},
       });
@@ -403,34 +405,79 @@ export const AdminController = {
   // CREATE (Talabani saqlash va Parol yuborish) - /admin/students (POST)
   async createStudent(req, res, next) {
     try {
-      // Validatsiya xatolarini tekshirish
-      if (req.validationErrors && req.validationErrors.length > 0) {
-        const courses = await Courses.getAll();
-        return res.render('admin/students/create.ejs', {
-          errors: req.validationErrors,
-          old: req.oldBody,
-          user: req.user,
+      await db.transaction(async (trx) => {
+        if (req.validationErrors && req.validationErrors.length > 0) {
+          const allCourses = await db('course').select(
+            'id',
+            'title',
+            'credits',
+            'faculty_id'
+          );
+          const faculties = await Faculties.getAll();
+          return res.render('admin/students/create.ejs', {
+            errors: req.validationErrors,
+            old: req.oldBody,
+            user: req.user,
+            allCourses,
+            faculties,
+          });
+        }
+        const {
+          email,
+          birth_date,
+          enrollmentDate,
+          faculty_id,
           courses,
-        });
-      }
+          ...studentData
+        } = req.body;
 
-      const { email, birth_date, enrollmentDate, ...studentData } = req.body;
+        const randomPassword = generatePassword();
+        const hashedPassword = await hashPassword(randomPassword);
 
-      // Avtomatik parol yaratish
-      const randomPassword = generatePassword();
-      const hashedPassword = await hashPassword(randomPassword);
+        const newStudentIds = await trx('students')
+          .insert({
+            ...studentData,
+            email: email,
+            password: hashedPassword,
+            birth_date: birth_date,
+            enrollmentDate: enrollmentDate,
+            faculty_id: faculty_id || null,
+          })
+          .returning('id');
 
-      await Students.create({
-        ...studentData,
-        email: email,
-        password: hashedPassword,
-        birth_date: birth_date,
-        enrollmentDate: enrollmentDate,
+        const studentId = newStudentIds[0].id || newStudentIds[0];
+
+        if (
+          courses &&
+          (Array.isArray(courses) || typeof courses === 'string')
+        ) {
+          const selectedCourses = Array.isArray(courses) ? courses : [courses];
+
+          const courseBindings = selectedCourses.map((courseItem) => {
+            let courseId = courseItem;
+
+            if (typeof courseItem === 'string' && courseItem.startsWith('{')) {
+              try {
+                const parsed = JSON.parse(courseItem);
+                courseId = parsed.id;
+              } catch (e) {
+                next(e);
+              }
+            }
+
+            return {
+              student_id: studentId,
+              course_id: courseId,
+            };
+          });
+          if (courseBindings.length > 0) {
+            await trx('student_course').insert(courseBindings);
+          }
+        }
+        await sendLoginCredentials(email, randomPassword);
+
+        return res.redirect('/admin/students');
       });
-
-      await sendLoginCredentials(email, randomPassword);
-
-      return res.redirect('/admin/students');
     } catch (err) {
       next(err);
     }
@@ -438,8 +485,24 @@ export const AdminController = {
   async updateStudentPage(req, res, next) {
     try {
       const studentId = req.params.id;
-      const student = await Students.getById(studentId);
-      const courses = await Courses.getAll(); // Barcha kurslar tanlash uchun
+
+      const student = await Students.knex()
+        .where('students.id', studentId)
+        .leftJoin('faculty', 'students.faculty_id', 'faculty.id')
+        .select('students.*', 'faculty.name as faculty_name')
+        .first();
+      const studentCourses = await db('student_course')
+        .where({ student_id: studentId })
+        .pluck('course_id');
+
+      const allCourses = await db('course').select(
+        'id',
+        'title',
+        'credits',
+        'faculty_id'
+      );
+
+      const faculties = await Faculties.getAll();
 
       if (!student) {
         return res.status(404).send('Talaba topilmadi.');
@@ -454,7 +517,9 @@ export const AdminController = {
 
       return res.render('admin/students/edit.ejs', {
         student,
-        courses,
+        allCourses,
+        faculties,
+        studentCourses,
         user: req.user,
         errors: req.validationErrors || [],
         old: {},
@@ -468,33 +533,69 @@ export const AdminController = {
   // UPDATE (Ma'lumotni yangilash) - /admin/students/:id/edit (POST)
   async updateStudent(req, res, next) {
     try {
-      if (req.validationErrors && req.validationErrors.length > 0) {
-        const courses = await Courses.getAll();
-        const student = await Students.getById(req.params.id); // Talabani qayta yuklash
+      await db.transaction(async (trx) => {
+        const studentId = req.params.id;
 
-        // Date formatini oldinga to'g'ri uzatish uchun
-        const formatDate = (date) =>
-          date ? new Date(date).toISOString().substring(0, 10) : null;
-        if (student.birth_date)
-          student.birth_date = formatDate(student.birth_date);
-        if (student.enrollmentDate)
-          student.enrollmentDate = formatDate(student.enrollmentDate);
+        if (req.validationErrors && req.validationErrors.length > 0) {
+          const allCourses = await trx('course').select(
+            'id',
+            'title',
+            'credits',
+            'faculty_id'
+          );
+          const faculties = await Faculties.getAll();
+          const student = await Students.getById(studentId);
 
-        return res.render('admin/students/edit.ejs', {
-          student,
-          courses,
-          errors: req.validationErrors,
-          old: req.oldBody,
-          user: req.user,
-        });
-      }
+          const studentCourses = await trx('student_course')
+            .where({ student_id: studentId })
+            .pluck('course_id');
 
-      // eslint-disable-next-line no-unused-vars
-      const { email, ...updateData } = req.body;
+          const formatDate = (date) =>
+            date ? new Date(date).toISOString().substring(0, 10) : null;
+          if (student.birth_date)
+            student.birth_date = formatDate(student.birth_date);
+          if (student.enrollmentDate)
+            student.enrollmentDate = formatDate(student.enrollmentDate);
 
-      await Students.update(req.params.id, updateData);
+          return res.render('admin/students/edit.ejs', {
+            student,
+            allCourses,
+            faculties,
+            studentCourses,
+            errors: req.validationErrors,
+            old: req.oldBody,
+            user: req.user,
+          });
+        }
+        // eslint-disable-next-line no-unused-vars
+        const { faculty_id, courses, email, ...updateData } = req.body;
 
-      return res.redirect('/admin/students');
+        await trx('students')
+          .where({ id: studentId })
+          .update({
+            ...updateData,
+            faculty_id: faculty_id || null,
+          });
+
+        await trx('student_course').where({ student_id: studentId }).del();
+
+        if (
+          courses &&
+          (Array.isArray(courses) || typeof courses === 'string')
+        ) {
+          const selectedCourses = Array.isArray(courses) ? courses : [courses];
+
+          const courseBindings = selectedCourses.map((courseId) => ({
+            student_id: studentId,
+            course_id: courseId,
+          }));
+
+          if (courseBindings.length > 0) {
+            await trx('student_course').insert(courseBindings);
+          }
+        }
+        return res.redirect('/admin/students');
+      });
     } catch (err) {
       next(err);
     }

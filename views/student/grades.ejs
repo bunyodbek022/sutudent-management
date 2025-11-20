@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= student.first_name %> Baholari</title>
+    <link rel="stylesheet" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          crossorigin="anonymous" 
+          referrerpolicy="no-referrer" />
+          
+    <style>
+        :root {
+            --primary-color: #f39c12; 
+            --secondary-color: #2980b9; 
+            --danger-color: #e74c3c;
+            --background-light: #f4f4f4;
+            --card-background: #ffffff;
+            --font-color: #333;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--background-light); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--card-background); padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 30px; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+        th { background-color: #f7f7f7; color: var(--font-color); font-weight: 700; font-size: 0.9em; }
+        
+        .grade-badge {
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 50%; /* Dumaloq qilish */
+            color: white;
+            font-size: 1.1em;
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            line-height: 23px;
+            text-align: center;
+        }
+        /* Baho ranglari */
+        .grade-A { background-color: #27ae60; } /* Yashil */
+        .grade-B { background-color: #2ecc71; }
+        .grade-C { background-color: #f1c40f; } /* Sariq */
+        .grade-D { background-color: #e67e22; } /* To'q sariq */
+        .grade-E { background-color: var(--danger-color); } /* Qizil */
+        
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-clipboard-check"></i> <%= student.first_name %>ning Baholari Ro'yxati</h1>
+        <h2>Talaba: <%= student.first_name %> <%= student.last_name %></h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Kurs Nomi</th>
+                    <th>Kredit</th>
+                    <th>Baho</th>
+                    <th>Baholangan Sana</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (grades.length === 0) { %>
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #7f8c8d; padding: 30px;">
+                            Sizda hali baholangan kurslar yo'q.
+                        </td>
+                    </tr>
+                <% } %>
+                
+                <% grades.forEach((grade) => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= grade.course_title %></td>
+                        <td><%= grade.credits %></td>
+                        <td>
+                            <span class="grade-badge grade-<%= grade.score %>">
+                                <%= grade.score %>
+                            </span>
+                        </td>
+                        <td><%= new Date(grade.updated_at).toLocaleDateString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <a href="/student" class="back-link">
+            <i class="fas fa-arrow-left"></i> Dashboardga Qaytish
+        </a>
+    </div>
+</body>
+</html>

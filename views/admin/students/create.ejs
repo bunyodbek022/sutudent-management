@@ -12,7 +12,7 @@
           
     <style>
         :root {
-            --primary-color: #3498db; /* Talabalar uchun asosiy rang */
+            --primary-color: #3498db;
             --secondary-color: #2c3e50;
             --success-color: #2ecc71;
             --background-light: #f4f4f4;
@@ -83,6 +83,21 @@
             gap: 20px;
         }
 
+         /* Kurslar tanlash uchun maxsus uslub */
+        .course-selection-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: #fcfcfc;
+        }
+        .course-selection-box label {
+            font-weight: normal;
+            margin-left: 5px;
+            display: inline;
+        }
+
          /* Xato Xabarlari */
         .error-list {
             list-style: none;
@@ -110,6 +125,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
+            margin-top: 15px; /* Qo'shimcha kurslar qutisi uchun margin */
         }
         button[type="submit"]:hover {
             background-color: #27ae60;
@@ -180,15 +196,22 @@
             </div>
             
             <div class="form-group">
-                <label for="course_id">Kurs: *</label>
-                <select name="course_id" id="course_id" required>
-                    <option value="">Kursni tanlang</option>
-                    <% courses.forEach(c => { %>
-                        <option value="<%= c.id %>" <%= old.course_id === c.id ? 'selected' : '' %>>
-                            <%= c.title %>
+                <label for="faculty_id">Fakultet Tanlash: *</label>
+                <select id="faculty_id" name="faculty_id" required>
+                    <option value="">-- Fakultetni tanlang --</option>
+                    <% faculties.forEach(faculty => { %>
+                        <option value="<%= faculty.id %>" <%= old.faculty_id === faculty.id ? 'selected' : '' %>>
+                            <%= faculty.name %>
                         </option>
                     <% }) %>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label>Biriktiriladigan Kurslar (Ko'p tanlash mumkin)</label>
+                <div id="course-selection" class="course-selection-box">
+                    <p style="color: #777; margin: 0;">Iltimos, avval **Fakultetni** tanlang.</p>
+                </div>
             </div>
             
             <button type="submit">
@@ -200,5 +223,56 @@
             <i class="fas fa-arrow-left"></i> Ro'yxatga qaytish
         </a>
     </div>
+
+    <script>
+        // Linter/Editor xatolarini maksimal darajada kamaytirish uchun EJS kodini yashiramiz.
+        /* */
+
+        const allCourses = <%- JSON.stringify(allCourses || []) %>;
+        const oldSelectedCourses = <%- JSON.stringify(Array.isArray(old.courses) ? old.courses : (old.courses ? [old.courses] : [])) %>;
+        
+        // Agar editor xato bersa ham, iltimos shu qismni ishlatishda davom eting.
+        
+        const facultySelect = document.getElementById('faculty_id');
+        const courseSelectionDiv = document.getElementById('course-selection');
+
+        function filterCourses(facultyId) {
+            courseSelectionDiv.innerHTML = '';
+            
+            if (!facultyId) {
+                courseSelectionDiv.innerHTML = '<p style="color: #777; margin: 0;">Iltimos, avval Fakultetni tanlang.</p>';
+                return;
+            }
+
+            const filteredCourses = allCourses.filter(course => course.faculty_id === facultyId);
+
+            if (filteredCourses.length === 0) {
+                 courseSelectionDiv.innerHTML = '<p style="color: red; margin: 0;">Bu Fakultetga biriktirilgan kurslar topilmadi.</p>';
+                 return;
+            }
+
+            filteredCourses.forEach(course => {
+                const isChecked = oldSelectedCourses.includes(course.id) ? 'checked' : ''; 
+                
+
+                const courseHtml = ` 
+                    <div style="margin-bottom: 8px;">
+                        <input type="checkbox" id="course_${course.id}" name="courses" value="${course.id}" ${isChecked}>
+                        <label for="course_${course.id}">${course.title} (${course.credits} kredit)</label>
+                    </div>
+                `; 
+                
+                courseSelectionDiv.innerHTML += courseHtml;
+            });
+        }
+
+        facultySelect.addEventListener('change', (e) => {
+            filterCourses(e.target.value);
+        });
+
+        if (facultySelect.value) {
+            filterCourses(facultySelect.value);
+        }
+    </script>
 </body>
 </html>

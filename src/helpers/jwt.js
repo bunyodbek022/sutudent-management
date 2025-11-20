@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import { ApiError } from '../utils/ApiError.js';
 
 // CREATE ACCESS TOKEN
-export const generateAccessToken = (user) => {
+export const generateAccessToken = (user, userType) => {
   return jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, userType: userType },
     process.env.JWT_ACCESS_SECRET,
     {
       expiresIn: process.env.JWT_ACCESS_EXPIRES,
@@ -15,9 +15,9 @@ export const generateAccessToken = (user) => {
 };
 
 // CREATE REFRESH TOKEN
-export const generateRefreshToken = (user) => {
+export const generateRefreshToken = (user, userType) => {
   return jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user._id, role: user.role, userType: userType },
     process.env.JWT_REFRESH_SECRET,
     {
       expiresIn: process.env.JWT_REFRESH_EXPIRES,
